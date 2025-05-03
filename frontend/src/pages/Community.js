@@ -22,6 +22,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
@@ -32,6 +34,7 @@ import { useNavigate } from 'react-router-dom';
 import CommunityChat from '../components/CommunityChat';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 import '../styles/Community.css';
 
 const Community = () => {
@@ -50,24 +53,16 @@ const Community = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [categories, setCategories] = useState(['all']);
 
   const { ref, inView } = useInView({ threshold: 0 });
-
-  const categories = [
-    'all',
-    'breakfast',
-    'lunch',
-    'dinner',
-    'dessert',
-    'snacks',
-    'vegetarian',
-    'vegan',
-    'gluten-free',
-  ];
 
   useEffect(() => {
     fetchPosts();
     fetchTrendingPosts();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -75,6 +70,18 @@ const Community = () => {
       loadMorePosts();
     }
   }, [inView]);
+
+  useEffect(() => {
+    if (posts) {
+      const filtered = posts.filter(post => {
+        const searchLower = searchTerm.toLowerCase();
+        const postNameMatch = post.title?.toLowerCase().includes(searchLower);
+        const userNameMatch = post.userName?.toLowerCase().includes(searchLower);
+        return searchTerm === '' || postNameMatch || userNameMatch;
+      });
+      setFilteredPosts(filtered);
+    }
+  }, [searchTerm, posts]);
 
   const fetchPosts = async () => {
     try {
@@ -94,6 +101,16 @@ const Community = () => {
       setTrendingPosts(response.data);
     } catch (error) {
       console.error('Error fetching trending posts:', error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get('/api/posts/categories');
+      const fetchedCategories = ['all', ...response.data];
+      setCategories(fetchedCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -162,6 +179,7 @@ const Community = () => {
   const renderPost = (post) => (
     <Card key={post.id} className="modern-post-tile" sx={{ borderRadius: 4, boxShadow: 3, transition: '0.3s', '&:hover': { boxShadow: 8, transform: 'translateY(-4px) scale(1.01)' }, bgcolor: 'background.paper' }}>
       <CardContent>
+        {/* Header: User Info and Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Avatar
             alt={post.userName}
@@ -184,12 +202,21 @@ const Community = () => {
             </Box>
           )}
         </Box>
+
+        {/* Title & Description */}
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
           {post.title}
         </Typography>
         <Typography variant="body1" paragraph sx={{ color: 'text.secondary', minHeight: 48 }}>
           {post.description}
         </Typography>
+        {post.content && (
+          <Typography variant="body2" paragraph sx={{ color: 'text.secondary', mb: 1 }}>
+            {post.content}
+          </Typography>
+        )}
+
+        {/* Media */}
         {post.mediaUrls && post.mediaUrls.length > 0 && (
           <Box sx={{ mt: 2, mb: 2, borderRadius: 2, overflow: 'hidden', boxShadow: 1 }}>
             {post.mediaType === 'image' ? (
@@ -206,6 +233,32 @@ const Community = () => {
             ) : null}
           </Box>
         )}
+
+        {/* Recipe Details */}
+        {(post.cookingTime || post.servings || post.category) && (
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 2 }}>
+            {post.cookingTime ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 600 }}>Cooking Time:</Typography>
+                <Typography variant="body2" color="text.secondary">{post.cookingTime} min</Typography>
+              </Box>
+            ) : null}
+            {post.servings ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 600 }}>Servings:</Typography>
+                <Typography variant="body2" color="text.secondary">{post.servings}</Typography>
+              </Box>
+            ) : null}
+            {post.category ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 600 }}>Category:</Typography>
+                <Typography variant="body2" color="text.secondary">{post.category}</Typography>
+              </Box>
+            ) : null}
+          </Box>
+        )}
+
+        {/* Ingredients */}
         {post.ingredients && post.ingredients.length > 0 && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
@@ -214,12 +267,29 @@ const Community = () => {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {post.ingredients.map((ingredient, index) => (
                 <Paper key={index} elevation={1} sx={{ px: 1.5, py: 0.5, borderRadius: 2, bgcolor: 'grey.100', fontSize: 13 }}>
-                  {ingredient}{post.amounts ? ` - ${post.amounts[index]}` : ''}
+                  {ingredient}{post.amounts && post.amounts[index] ? ` - ${post.amounts[index]}` : ''}
                 </Paper>
               ))}
             </Box>
           </Box>
         )}
+
+        {/* Instructions */}
+        {post.instructions && post.instructions.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+              Instructions:
+            </Typography>
+            <Box component="ol" sx={{ pl: 3, mb: 1 }}>
+              {post.instructions.map((step, idx) => (
+                <li key={idx} style={{ marginBottom: 6 }}>
+                  <Typography variant="body2" color="text.secondary">{step}</Typography>
+                </li>
+              ))}
+            </Box>
+          </Box>
+        )}
+
       </CardContent>
       <Divider sx={{ my: 1 }} />
       <Box sx={{ px: 2, pb: 2 }}>
@@ -229,31 +299,62 @@ const Community = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)', minHeight: '100vh', py: 4 }}>
+    <Box sx={{ 
+      bgcolor: 'linear-gradient(135deg, #f0f7ff 0%, #e3eeff 50%, #dde7ff 100%)', 
+      minHeight: '100vh', 
+      py: 4 
+    }}>
       <Container maxWidth="xl">
         <Grid container spacing={4}>
           {/* Main Content */}
           <Grid item xs={12} md={8}>
-            <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, bgcolor: 'white', mb: 4 }}>
+            <Paper elevation={0} sx={{ 
+              p: { xs: 2, md: 4 }, 
+              borderRadius: 4, 
+              bgcolor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              mb: 4 
+            }}>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, mb: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', flex: 1 }}>
                   Community
                 </Typography>
-                <FormControl sx={{ minWidth: 180 }} size="small">
-                  <InputLabel id="category-select-label">Category</InputLabel>
-                  <Select
-                    labelId="category-select-label"
-                    value={selectedCategory}
-                    label="Category"
-                    onChange={handleCategoryChange}
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category} value={category}>
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', sm: 'auto' } }}>
+                  <TextField
+                    size="small"
+                    placeholder="Search posts or users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{
+                      minWidth: 200,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <FormControl sx={{ minWidth: 180 }} size="small">
+                    <InputLabel id="category-select-label">Category</InputLabel>
+                    <Select
+                      labelId="category-select-label"
+                      value={selectedCategory}
+                      label="Category"
+                      onChange={handleCategoryChange}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
               </Box>
               <Divider sx={{ mb: 3 }} />
               {loading ? (
@@ -262,7 +363,7 @@ const Community = () => {
                 </Box>
               ) : posts.length > 0 ? (
                 <Box className="posts-grid" sx={{ mt: 2 }}>
-                  {posts.map(renderPost)}
+                  {[...filteredPosts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(renderPost)}
                   {hasMore && (
                     <Box ref={ref} sx={{ display: 'flex', justifyContent: 'center', p: 3, gridColumn: '1/-1' }}>
                       {loadingMore ? <CircularProgress /> : null}
@@ -281,7 +382,12 @@ const Community = () => {
           <Grid item xs={12} md={4}>
             <Box sx={{ position: 'sticky', top: 32, display: 'flex', flexDirection: 'column', gap: 3 }}>
               {/* Featured Chef Card */}
-              <Card sx={{ borderRadius: 3, boxShadow: 2, bgcolor: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)', p: 2 }}>
+              <Card sx={{ 
+                borderRadius: 3, 
+                boxShadow: 2, 
+                bgcolor: 'linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%)', 
+                p: 2 
+              }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar src="https://randomuser.me/api/portraits/men/32.jpg" sx={{ width: 56, height: 56 }} />
                   <Box>
@@ -294,23 +400,47 @@ const Community = () => {
                 </Typography>
               </Card>
               {/* Cooking Tip Card */}
-              <Card sx={{ borderRadius: 3, boxShadow: 2, bgcolor: '#fff', p: 2 }}>
+              <Card sx={{ 
+                borderRadius: 3, 
+                boxShadow: 2, 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)', 
+                p: 2 
+              }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>Quick Cooking Tip</Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   Always let your meat rest after cooking to keep it juicy and flavorful!
                 </Typography>
               </Card>
               {/* Fun Fact Card */}
-              <Card sx={{ borderRadius: 3, boxShadow: 2, bgcolor: '#fff', p: 2 }}>
+              <Card sx={{ 
+                borderRadius: 3, 
+                boxShadow: 2, 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)', 
+                p: 2 
+              }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'secondary.main' }}>Did You Know?</Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   The world's largest omelette was made with 145,000 eggs in Portugal!
                 </Typography>
               </Card>
-              {/* Trending Posts List (kept for functionality, but no title) */}
+              {/* Trending Posts List */}
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {trendingPosts.map((post) => (
-                  <Card key={post.id} sx={{ borderRadius: 3, boxShadow: 2, cursor: 'pointer', transition: '0.2s', '&:hover': { boxShadow: 6, bgcolor: 'grey.50' } }} onClick={() => navigate(`/posts/${post.id}`)}>
+                  <Card key={post.id} sx={{ 
+                    borderRadius: 3, 
+                    boxShadow: 2, 
+                    cursor: 'pointer', 
+                    transition: '0.2s', 
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    '&:hover': { 
+                      boxShadow: 6, 
+                      bgcolor: 'rgba(255, 255, 255, 0.95)',
+                      transform: 'translateY(-2px)' 
+                    } 
+                  }} onClick={() => navigate(`/posts/${post.id}`)}>
                     <CardContent sx={{ p: 2 }}>
                       <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
                         {post.title}
@@ -326,15 +456,59 @@ const Community = () => {
           </Grid>
         </Grid>
       </Container>
-      <Dialog open={deleteDialogOpen} onClose={cancelDeletePost}>
-        <DialogTitle>Delete Post</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this post? This action cannot be undone.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={cancelDeletePost}>Cancel</Button>
-          <Button onClick={confirmDeletePost} color="error">Delete</Button>
-        </DialogActions>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={cancelDeletePost}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          style: {
+            backgroundColor: '#ffe4e6', // solid light rose
+            borderRadius: 16,
+            boxShadow: '0 8px 32px rgba(60,72,88,0.18)',
+            margin: 'auto',
+            minWidth: 320,
+            maxWidth: 400,
+            border: '1px solid #e0e7ef',
+            backgroundImage: 'none',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none',
+            opacity: 1,
+            padding: 0
+          }
+        }}
+      >
+        <div style={{ padding: 32, textAlign: 'center', background: '#e0e7ef' }}>
+          <h2 style={{
+            margin: 0,
+            marginBottom: 12,
+            fontWeight: 800,
+            fontSize: 24,
+            color: '#d32f2f',
+            background: 'none',
+            padding: 0
+          }}>
+            Delete Post
+          </h2>
+          <div style={{
+            textAlign: 'center',
+            padding: '16px 0',
+            fontSize: 17,
+            color: '#222',
+            background: 'none',
+            marginBottom: 16
+          }}>
+            Are you sure you want to delete this post?
+            <br />
+            <span style={{ color: '#d32f2f', fontWeight: 700, fontSize: 16 }}>
+              This action cannot be undone.
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, background: 'none', marginTop: 16 }}>
+            <Button onClick={cancelDeletePost} variant="outlined" sx={{ minWidth: 100, fontWeight: 700 }}>Cancel</Button>
+            <Button onClick={confirmDeletePost} color="error" variant="contained" sx={{ minWidth: 100, fontWeight: 700 }}>Delete</Button>
+          </div>
+        </div>
       </Dialog>
     </Box>
   );

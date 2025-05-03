@@ -1,12 +1,13 @@
 import React from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
-import { Box, Container } from '@mui/material';
+import { Box, Container, useTheme } from '@mui/material';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { useAuth } from '../contexts/AuthContext';
 
 const Layout = () => {
   const { isAuthenticated } = useAuth();
+  const theme = useTheme();
 
   // Protected routes that require authentication
   const protectedRoutes = ['/dashboard', '/profile', '/community', '/posts', '/learning-plans'];
@@ -22,7 +23,7 @@ const Layout = () => {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        backgroundColor: '#FAFAFA', // Instagram-like background color
+        backgroundColor: theme.palette.background.default,
       }}
     >
       <Navbar />
@@ -33,6 +34,7 @@ const Layout = () => {
           pt: { xs: 9, sm: 10 }, // Increased padding-top to account for fixed navbar
           pb: { xs: 4, sm: 6 },
           px: { xs: 2, sm: 3 },
+          backgroundColor: theme.palette.background.default,
         }}
       >
         <Container 

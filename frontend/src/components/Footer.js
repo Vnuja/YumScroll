@@ -21,13 +21,13 @@ const Footer = () => {
               variant="h5"
               style={{ color: '#F5F5F5', fontWeight: 'bold', marginBottom: '16px' }}
             >
-              YumScroll
+              CookSphere
             </Typography>
             <Typography
               variant="body2"
               style={{ color: '#EDE9FE' }}
             >
-              Ignite your culinary passion with YumScroll. Explore vibrant recipes, connect with global food enthusiasts, and share your kitchen adventures.
+              Ignite your culinary passion with CookSphere. Explore vibrant recipes, connect with global food enthusiasts, and share your kitchen adventures.
             </Typography>
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -85,7 +85,7 @@ const Footer = () => {
               variant="body2"
               style={{ color: '#EDE9FE', marginBottom: '8px' }}
             >
-              Email: hello@YumScroll.app
+              Email: hello@cooksphere.app
             </Typography>
             <Typography
               variant="body2"
@@ -95,7 +95,7 @@ const Footer = () => {
             </Typography>
             <Box>
               <IconButton
-                href="https://instagram.com/YumScroll"
+                href="https://instagram.com/cooksphere"
                 target="_blank"
                 style={{ color: '#F5F5F5' }}
                 onMouseOver={(e) => (e.target.style.color = '#FBCFE8')}
@@ -104,7 +104,7 @@ const Footer = () => {
                 <Instagram />
               </IconButton>
               <IconButton
-                href="https://twitter.com/YumScroll"
+                href="https://twitter.com/cooksphere"
                 target="_blank"
                 style={{ color: '#F5F5F5' }}
                 onMouseOver={(e) => (e.target.style.color = '#FBCFE8')}
@@ -113,7 +113,7 @@ const Footer = () => {
                 <Twitter />
               </IconButton>
               <IconButton
-                href="https://facebook.com/YumScroll"
+                href="https://facebook.com/cooksphere"
                 target="_blank"
                 style={{ color: '#F5F5F5' }}
                 onMouseOver={(e) => (e.target.style.color = '#FBCFE8')}
@@ -122,7 +122,7 @@ const Footer = () => {
                 <Facebook />
               </IconButton>
               <IconButton
-                href="https://youtube.com/YumScroll"
+                href="https://youtube.com/cooksphere"
                 target="_blank"
                 style={{ color: '#F5F5F5' }}
                 onMouseOver={(e) => (e.target.style.color = '#FBCFE8')}
@@ -139,7 +139,7 @@ const Footer = () => {
             align="center"
             style={{ color: '#EDE9FE' }}
           >
-            © {new Date().getFullYear()} YumScroll. All rights reserved. |{' '}
+            © {new Date().getFullYear()} CookSphere. All rights reserved. |{' '}
             <Link
               component={RouterLink}
               to="/privacy"

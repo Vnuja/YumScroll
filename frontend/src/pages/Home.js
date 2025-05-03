@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Box,
   Container,
@@ -11,14 +13,18 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const features = [
     {
@@ -73,7 +79,7 @@ const Home = () => {
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
               }}
             >
-              Welcome to YumScroll
+              Welcome to CookSphere
             </Typography>
             <Typography 
               variant="h5" 
@@ -85,22 +91,20 @@ const Home = () => {
             >
               Join our community of food enthusiasts and share your culinary journey
             </Typography>
-            {!isAuthenticated && (
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => navigate('/register')}
-                sx={{
-                  backgroundColor: theme.palette.primary.main,
-                  '&:hover': {
-                    backgroundColor: theme.palette.primary.dark,
-                  },
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                }}
-              >
-                Get Started
-              </Button>
-            )}
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/register')}
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                '&:hover': {
+                  backgroundColor: theme.palette.primary.dark,
+                },
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              }}
+            >
+              Get Started
+            </Button>
           </Box>
         </Container>
       </Box>
@@ -116,7 +120,7 @@ const Home = () => {
             color: theme.palette.primary.main,
           }}
         >
-          Why Choose YumScroll?
+          Why Choose CookSphere?
         </Typography>
         <Grid container spacing={4}>
           {features.map((feature, index) => (
@@ -157,52 +161,6 @@ const Home = () => {
           ))}
         </Grid>
       </Container>
-
-      {/* CTA Section */}
-      <Box
-        sx={{
-          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-          color: 'white',
-          py: 8,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={8}>
-              <Typography variant="h3" sx={{ mb: 2, fontWeight: 700 }}>
-                Ready to Start Your Culinary Journey?
-              </Typography>
-              <Typography variant="h6" sx={{ opacity: 0.9 }}>
-                Join thousands of food enthusiasts and share your passion for cooking
-              </Typography>
-            </Grid>
-            <Grid
-              item
-              xs={12}
-              md={4}
-              sx={{ display: 'flex', justifyContent: 'center' }}
-            >
-              {!isAuthenticated && (
-                <Button
-                  variant="contained"
-                  size="large"
-                  onClick={() => navigate('/register')}
-                  sx={{
-                    backgroundColor: 'white',
-                    color: theme.palette.primary.main,
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    },
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                  }}
-                >
-                  Sign Up Now
-                </Button>
-              )}
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
     </Box>
   );
 };

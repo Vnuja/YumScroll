@@ -15,8 +15,8 @@ const theme = createTheme({
       contrastText: '#fff',
     },
     background: {
-      default: '#FAFAFA', 
-      paper: '#FFFFFF',
+      default: '#fff',
+      paper: '#fff',
       gradient: 'linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D, #F56040, #F77737, #FCAF45, #FFDC80)',
       gradientLight: 'linear-gradient(45deg, rgba(64,93,230,0.2), rgba(225,48,108,0.2))',
     },

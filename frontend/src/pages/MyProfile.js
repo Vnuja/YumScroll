@@ -32,7 +32,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 const MyProfile = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,13 +43,16 @@ const MyProfile = () => {
     bio: '',
     specialties: [],
     favoriteRecipes: [],
-    isPrivate: false
+    isPrivate: false,
+    profileImageUrl: ''
   });
   const [editDialog, setEditDialog] = useState(false);
   const [newSpecialty, setNewSpecialty] = useState('');
   const [newFavoriteRecipe, setNewFavoriteRecipe] = useState('');
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -71,8 +74,10 @@ const MyProfile = () => {
         bio: response.data.bio || '',
         specialties: response.data.specialties || [],
         favoriteRecipes: response.data.favoriteRecipes || [],
-        isPrivate: response.data.isPrivate || false
+        isPrivate: response.data.isPrivate || false,
+        profileImageUrl: response.data.profileImageUrl || ''
       });
+      setProfileImagePreview(response.data.profileImageUrl || '');
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to load your profile data. Please try again later.');
@@ -125,9 +130,14 @@ const MyProfile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      await axios.put('/api/users/profile', profileData, { withCredentials: true });
+      await axios.put('/api/users/profile', { ...profileData, id: user.id }, { withCredentials: true });
       setEditDialog(false);
       fetchUserData();
+      setUser(prev => ({
+        ...prev,
+        name: profileData.name,
+        profileImageUrl: profileData.profileImageUrl
+      }));
     } catch (error) {
       console.error('Error updating profile:', error);
       setError('Failed to update profile. Please try again later.');
@@ -198,8 +208,8 @@ const MyProfile = () => {
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
             <Avatar
-              src={user?.picture}
-              alt={user?.name}
+              src={profileData.profileImageUrl || user?.picture}
+              alt={profileData.name || user?.name}
               sx={{ width: 120, height: 120, mx: 'auto', mb: 2 }}
             />
             <Typography variant="h5" gutterBottom>
@@ -291,8 +301,18 @@ const MyProfile = () => {
                       <CardMedia
                         component="img"
                         height="200"
-                        image={post.mediaUrls[0]}
+                        image={Array.isArray(post.mediaUrls) ? post.mediaUrls[0] : post.mediaUrls}
                         alt={post.title}
+                        sx={{ 
+                          objectFit: 'cover',
+                          backgroundColor: '#f5f5f5',
+                          maxHeight: '200px',
+                          width: '100%'
+                        }}
+                        onError={(e) => {
+                          console.error('Error loading image:', post.mediaUrls[0]);
+                          e.target.src = '/placeholder-image.jpg';
+                        }}
                       />
                     )}
                     <CardContent>
@@ -330,13 +350,64 @@ const MyProfile = () => {
       {/* Edit Profile Dialog */}
       <Dialog open={editDialog} onClose={() => setEditDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Profile</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
+        <DialogContent
+          sx={{
+            background: '#fff',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.15)',
+            borderRadius: 3,
+            p: 0,
+            minWidth: 360,
+            maxWidth: 480,
+            mx: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ width: '100%', mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3 }}>
+            <Avatar
+              src={profileImagePreview || profileData.profileImageUrl || user?.picture}
+              alt={profileData.name || user?.name}
+              sx={{ width: 100, height: 100, mb: 2 }}
+            />
+            <Button
+              variant="outlined"
+              component="label"
+              disabled={uploadingImage}
+              sx={{ mb: 2 }}
+            >
+              {uploadingImage ? 'Uploading...' : 'Change Profile Image'}
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  setUploadingImage(true);
+                  const formData = new FormData();
+                  formData.append('image', file);
+                  try {
+                    const res = await axios.post('/api/users/profile/image', formData, {
+                      withCredentials: true,
+                      headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    setProfileData(prev => ({ ...prev, profileImageUrl: res.data.profileImageUrl }));
+                    setProfileImagePreview(res.data.profileImageUrl);
+                    setUser(prev => ({ ...prev, profileImageUrl: res.data.profileImageUrl }));
+                  } catch (err) {
+                    setError('Failed to upload image.');
+                  } finally {
+                    setUploadingImage(false);
+                  }
+                }}
+              />
+            </Button>
             <TextField
               fullWidth
               label="Name"
               value={profileData.name}
-              onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+              disabled
               sx={{ mb: 2 }}
             />
             <TextField
@@ -411,14 +482,21 @@ const MyProfile = () => {
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialog(false)} startIcon={<CancelIcon />}>
+        <Box sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 2,
+          mt: 2,
+          px: 3
+        }}>
+          <Button onClick={() => setEditDialog(false)} startIcon={<CancelIcon />} color="error" variant="text">
             Cancel
           </Button>
-          <Button onClick={handleSaveProfile} variant="contained" startIcon={<SaveIcon />}>
+          <Button onClick={handleSaveProfile} variant="contained" startIcon={<SaveIcon />} color="primary">
             Save
           </Button>
-        </DialogActions>
+        </Box>
       </Dialog>
     </Container>
   );

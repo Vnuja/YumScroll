@@ -13,11 +13,12 @@ import PostList from './pages/posts/PostList';
 import PostView from './pages/posts/PostView';
 import PostCreate from './pages/posts/PostCreate';
 import PostEdit from './pages/posts/PostEdit';
-import LearningPlans from './pages/learning/LearningPlans';
-import LearningPlanDetail from './pages/learning/LearningPlanDetail';
 import NotificationsPage from './pages/NotificationsPage';
 import Error from './pages/Error';
 import CommunityChatPage from './pages/CommunityChatPage';
+import LearningMaterialsList from './pages/learning-materials/LearningMaterialsList';
+import LearningMaterialCreate from './pages/learning-materials/LearningMaterialCreate';
+import LearningMaterialEdit from './pages/learning-materials/LearningMaterialEdit';
 
 function App() {
   return (
@@ -101,26 +102,34 @@ function App() {
           }
         />
         <Route
-          path="learning-plans"
-          element={
-            <PrivateRoute>
-              <LearningPlans />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="learning-plans/:id"
-          element={
-            <PrivateRoute>
-              <LearningPlanDetail />
-            </PrivateRoute>
-          }
-        />
-        <Route
           path="chat"
           element={
             <PrivateRoute>
               <CommunityChatPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="learning-materials"
+          element={
+            <PrivateRoute>
+              <LearningMaterialsList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="learning-materials/create"
+          element={
+            <PrivateRoute>
+              <LearningMaterialCreate />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="learning-materials/:id/edit"
+          element={
+            <PrivateRoute>
+              <LearningMaterialEdit />
             </PrivateRoute>
           }
         />
@@ -130,4 +139,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

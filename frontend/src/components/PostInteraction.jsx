@@ -6,6 +6,33 @@ import '../styles/PostInteraction.css';
 import '../styles/Icons.css';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import {
+  Box,
+  IconButton,
+  Typography,
+  TextField,
+  Button,
+  Divider,
+  Avatar,
+  Menu,
+  MenuItem,
+  CardActions,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+  Collapse,
+} from '@mui/material';
+import {
+  Favorite as FavoriteIcon,
+  FavoriteBorder as FavoriteBorderIcon,
+  Share as ShareIcon,
+  MoreVert as MoreVertIcon,
+  Send as SendIcon,
+  Comment as CommentIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+} from '@mui/icons-material';
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -21,6 +48,9 @@ const PostInteraction = ({ post, onUpdate }) => {
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [selectedComment, setSelectedComment] = useState(null);
+  const [showComments, setShowComments] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -261,125 +291,234 @@ const PostInteraction = ({ post, onUpdate }) => {
     }
   };
 
+  const handleMenuOpen = (event, comment) => {
+    event.stopPropagation();
+    setSelectedComment(comment);
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedComment(null);
+  };
+
+  const handleEditClick = () => {
+    setEditingComment(selectedComment.id);
+    setEditCommentText(selectedComment.content);
+    handleMenuClose();
+  };
+
+  const handleDeleteClick = () => {
+    handleDeleteComment(selectedComment.id);
+    handleMenuClose();
+  };
+
   return (
-    <div className="post-interaction">
-      <div className="interaction-buttons">
-        <button 
-          className={`icon-button ${isLiked ? 'liked' : ''}`}
-          onClick={handleLike}
-          disabled={isLikeLoading}
-        >
-          <span className="material-icons md-animate like">
-            {isLiked ? 'favorite' : 'favorite_border'}
-          </span>
-          <span>{likeCount}</span>
-        </button>
-        
-        <button className="icon-button">
-          <span className="material-icons md-animate comment">comment</span>
-          <span>{comments.length}</span>
-        </button>
+    <>
+      <Divider />
+      <CardActions sx={{ justifyContent: 'space-between', px: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton 
+            onClick={handleLike}
+            disabled={isLikeLoading}
+            color={isLiked ? 'primary' : 'default'}
+            sx={{ 
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'scale(1.1)' }
+            }}
+          >
+            {isLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+          </IconButton>
+          <Typography variant="body2" color="text.secondary">
+            {likeCount} {likeCount === 1 ? 'like' : 'likes'}
+          </Typography>
+          <Box 
+            component="button"
+            onClick={() => setShowComments(!showComments)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: 1,
+              transition: 'background-color 0.2s',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              }
+            }}
+          >
+            <CommentIcon fontSize="small" color="action" />
+            <Typography variant="body2" color="text.secondary">
+              {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+            </Typography>
+            {showComments ? 
+              <KeyboardArrowUpIcon fontSize="small" color="action" /> : 
+              <KeyboardArrowDownIcon fontSize="small" color="action" />
+            }
+          </Box>
+        </Box>
+        <IconButton onClick={handleShare}>
+          <ShareIcon />
+        </IconButton>
+      </CardActions>
 
-        <button className="icon-button" onClick={handleShare}>
-          <span className="material-icons md-animate share">share</span>
-        </button>
-      </div>
-
-      <div className="comments-section">
-        <form onSubmit={handleAddComment} className="add-comment">
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-            className="comment-input"
-          />
-          <button type="submit" className="submit-comment">
-            Post
-          </button>
-        </form>
-
-        <div className="comments-list">
-          {comments.map(comment => (
-            <div 
-              key={comment.id} 
-              id={`comment-${comment.id}`}
-              className="comment"
+      <Collapse in={showComments}>
+        <Box sx={{ px: 2, py: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Add a comment..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              sx={{ 
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3
+                }
+              }}
+            />
+            <IconButton 
+              color="primary"
+              onClick={handleAddComment}
+              disabled={!newComment.trim()}
+              sx={{
+                borderRadius: 2,
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: 'action.disabledBackground',
+                  color: 'action.disabled',
+                }
+              }}
             >
-              <div className="comment-header">
-                <span className="comment-author">{comment.userName || 'Anonymous'}</span>
-                <span className="comment-time">
-                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                </span>
-              </div>
-              
-              {editingComment === comment.id ? (
-                <div className="edit-comment">
-                  <input
-                    type="text"
-                    value={editCommentText}
-                    onChange={(e) => setEditCommentText(e.target.value)}
-                    className="edit-comment-input"
-                    autoFocus
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleEditComment(comment.id);
-                      }
-                    }}
-                  />
-                  <div className="edit-comment-buttons">
-                    <button 
-                      onClick={() => handleEditComment(comment.id)}
-                      className="save-button"
-                      type="button"
-                    >
-                      Save
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setEditingComment(null);
-                        setEditCommentText('');
-                      }}
-                      className="cancel-button"
-                      type="button"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="comment-content">
-                  <p>{comment.content}</p>
-                  {(user?.id === comment.userId || user?.id === post.userId) && (
-                    <div className="comment-actions">
-                      {user?.id === comment.userId && (
-                        <button 
-                          onClick={() => {
-                            setEditingComment(comment.id);
-                            setEditCommentText(comment.content);
-                          }}
-                          className="icon-button"
-                          title="Edit comment"
+              <SendIcon />
+            </IconButton>
+          </Box>
+
+          <Box 
+            sx={{ 
+              maxHeight: 300, 
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '10px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '10px',
+                '&:hover': {
+                  background: '#666',
+                },
+              },
+            }}
+          >
+            {comments.map((comment) => (
+              <ListItem
+                key={comment.id}
+                alignItems="flex-start"
+                sx={{ 
+                  px: 0,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                    borderRadius: 1
+                  }
+                }}
+              >
+                <ListItemAvatar>
+                  <Avatar src={comment.userPicture} alt={comment.userName} />
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Typography variant="subtitle2" component="span">
+                      {comment.userName}
+                    </Typography>
+                  }
+                  secondary={
+                    editingComment === comment.id ? (
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={editCommentText}
+                          onChange={(e) => setEditCommentText(e.target.value)}
+                          autoFocus
+                        />
+                        <Button 
+                          variant="contained" 
+                          size="small"
+                          onClick={() => handleEditComment(comment.id)}
                         >
-                          <span className="material-icons md-animate edit">edit</span>
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => handleDeleteComment(comment.id)}
-                        className="icon-button"
-                        title="Delete comment"
-                      >
-                        <span className="material-icons md-animate delete">delete</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+                          Save
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          size="small"
+                          onClick={() => setEditingComment(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </Box>
+                    ) : (
+                      <Box component="span">
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          color="text.primary"
+                          sx={{ display: 'block', mb: 0.5 }}
+                        >
+                          {comment.content}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                        </Typography>
+                      </Box>
+                    )
+                  }
+                />
+                {user && (user.id === comment.userId) && !editingComment && (
+                  <ListItemSecondaryAction>
+                    <IconButton 
+                      edge="end" 
+                      size="small"
+                      onClick={(e) => handleMenuOpen(e, comment)}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  </ListItemSecondaryAction>
+                )}
+              </ListItem>
+            ))}
+          </Box>
+        </Box>
+      </Collapse>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={handleEditClick}>Edit</MenuItem>
+        <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
+          Delete
+        </MenuItem>
+      </Menu>
+    </>
   );
 };
 

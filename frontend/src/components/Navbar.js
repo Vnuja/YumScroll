@@ -5,13 +5,13 @@ import {
   Home as HomeIcon,
   Explore as ExploreIcon,
   AddCircleOutline as AddIcon,
-  Search as SearchIcon,
   Notifications as NotificationsIcon,
   Menu as MenuIcon,
   Person as PersonIcon,
   Restaurant as RestaurantIcon,
   Google as GoogleIcon,
   ChatBubbleOutline as ChatIcon,
+  LibraryBooks as LibraryBooksIcon, // Added for Learning Materials
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import './Navbar.css';
@@ -70,9 +70,10 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { icon: <HomeIcon />, label: 'Home', path: '/' },
+    { icon: <HomeIcon />, label: 'Home', path: user ? '/dashboard' : '/' },
     { icon: <ExploreIcon />, label: 'Community', path: '/community' },
     { icon: <AddIcon />, label: 'Create Post', path: '/posts/create' },
+    { icon: <LibraryBooksIcon />, label: 'Learning Materials', path: '/learning-materials' },
     { 
       icon: <NotificationsIcon />, 
       label: 'Notifications', 
@@ -89,22 +90,10 @@ const Navbar = () => {
       <div className="navbar-container">
         <div className="navbar-content">
           {/* Logo */}
-          <Link to="/" className="navbar-logo">
+          <Link to={user ? "/dashboard" : "/"} className="navbar-logo">
             <RestaurantIcon />
-            <span>YumScroll</span>
+            <span>CookSphere</span>
           </Link>
-
-          {/* Search Bar */}
-          {!isMobile && (
-            <div className="navbar-search">
-              <SearchIcon className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="search-input"
-              />
-            </div>
-          )}
 
           {/* Navigation */}
           <div className="navbar-nav">
@@ -139,7 +128,7 @@ const Navbar = () => {
                   </button>
                 )}
                 <img
-                  src={user.picture}
+                  src={user.profileImageUrl || user.picture}
                   alt={user.name}
                   className={`avatar ${isActive('/profile') ? 'active' : ''}`}
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -194,4 +183,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;
